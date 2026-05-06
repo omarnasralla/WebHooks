@@ -28,5 +28,5 @@
 *.log
 
 ### Local secrets (use docker compose --env-file .env or export before mvn)
-.env
-.env.local
+# .env
+# .env.local
