@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: webhooks
+      POSTGRES_PASSWORD: webhooks
+      POSTGRES_DB: webhooks
+    volumes:
+      - webhooks_pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhooks -d webhooks"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?set WEBHOOK_SECRET in .env or shell}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/webhooks
+      SPRING_DATASOURCE_USERNAME: webhooks
+      SPRING_DATASOURCE_PASSWORD: webhooks
+      WOOCOMMERCE_TARGET_BASE_URL: ${WOOCOMMERCE_TARGET_BASE_URL:-https://ttf.cclab.store}
+      WOOCOMMERCE_TARGET_CONSUMER_KEY: ${WOOCOMMERCE_TARGET_CONSUMER_KEY:?}
+      WOOCOMMERCE_TARGET_CONSUMER_SECRET: ${WOOCOMMERCE_TARGET_CONSUMER_SECRET:?}
+      WOOCOMMERCE_SOURCE_BASE_URL: ${WOOCOMMERCE_SOURCE_BASE_URL:-https://thetechfreaks.net}
+      WOOCOMMERCE_SOURCE_CONSUMER_KEY: ${WOOCOMMERCE_SOURCE_CONSUMER_KEY:?}
+      WOOCOMMERCE_SOURCE_CONSUMER_SECRET: ${WOOCOMMERCE_SOURCE_CONSUMER_SECRET:?}
+
+volumes:
+  webhooks_pg:
